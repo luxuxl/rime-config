@@ -1,0 +1,13 @@
+config_version: '0.40'
+
+schema_list:
+  - schema: self
+
+# key_binder:
+#   bindings:
+    
+recognizer:
+  patterns:
+
+# ascii_composer:
+#   switch_key:
