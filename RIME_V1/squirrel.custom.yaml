@@ -202,3 +202,5 @@ patch:
       ascii_mode: true
     com.raycast.macos: # Raycast
       ascii_mode: true
+    md.obsidian: # obsidian
+      ascii_mode: true
