@@ -27,7 +27,7 @@ Rime 全局配置文件：
 
 # V1 介绍
 
-V1 的配置分别写到 `default.custom.yaml`、`squirrel.custom.yaml`、`luna_pinyin_simp.custom.yaml` 文件中
+V1 是对 `luna_pinyin_simp` 的 patch, 配置分别写到 `default.custom.yaml`、`squirrel.custom.yaml`、`luna_pinyin_simp.custom.yaml` 文件中
 
 V1 无法 `control+[` 触发 ascii_mode, Vim 模式只能用 Esc 退出
 
@@ -37,4 +37,4 @@ Rime 的 control+字符 会键入奇怪字符, 不知道为什么
 
 # V2 介绍
 
-V2 和 V1 不同之处在于配置全整合到输入法配置中, 缺少表情
+V2 相当于一个新的输入法, 同时将所有配置都放到 `self.schema.yaml` 中, 配置更加统一, 可以在同一个文件中进行改动
