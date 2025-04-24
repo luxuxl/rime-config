@@ -24,13 +24,24 @@ patch:
     - {when: has_menu, accept: period, send: Page_Down } # "." 下一页
     - {when: paging, accept: bracketleft, send: Page_Up } # "[" 上一页
     - {when: has_menu, accept: bracketright, send: Page_Down } # "]" 下一页
-
     # Vim 退出
-    # - {when: always, accept: Escape, toggle: ascii_mode}
+    - {when: always, accept: Escape, toggle: ascii_mode}
     # - {when: always, accept: "Control_R+bracketleft", toggle: ascii_mode}
   
   # 中文模式下的半角符号替换
   punctuator:
+    # # 中文标点
+    # half_shape:
+    # ',': '，'
+    # '.': '。'
+    # ':': '：'
+    # ';': '；'
+    # '<': '《'
+    # '>': '》'
+    # '\': '、'
+    # '(': '（'
+    # ')': '）'
+
     half_shape:
       ',': ', '
       '.': '.'
@@ -64,6 +75,7 @@ patch:
       ']': ']'
       '{': '{}'
       '}': '}'
+  
   switcher:
     abbreviate_options: true
     caption: "〔方案選單〕"
