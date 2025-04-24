@@ -9,16 +9,23 @@ schema:
     - 佛振 <chen.sst@gmail.com>
   description: |
     朙月拼音，簡化字輸出模式。
-switches:
-  - name: ascii_mode
-    reset: 0
-    states: [ 中文, 西文 ]
-  - name: full_shape
-    states: [ 半角, 全角 ]
-  - name: zh_simp
-    reset: 1
-    states: [ 漢字, 汉字 ]
+  dependencies:
+    - easy_en  # 从 custom.yaml 合并
 
+switches:
+  - name: ascii_mode # 0 中文，1 英文
+    reset: 1
+    states: [ 中文, 西文 ]
+  - name: zh_simp # 0 繁体 1 简体
+    reset: 1
+  - name: show_emoji # Emoji 开关 从 custom.yaml 合并 
+    reset: 1
+  - options: [ "utf8", "gbk", "gb2312" ] # 从 custom.yaml 合并
+    reset: 0 # 默认 UTF8
+    states:
+      - UTF-8
+      - GBK
+      - GB2312
 
 engine:
   processors:
@@ -40,30 +47,98 @@ engine:
     - punct_translator
     - table_translator@custom_phrase
     - script_translator
+    - table_translator@english # 从 custom.yaml 合并
   filters:
     - simplifier
+    - simplifier@emoji_conversion # 从 custom.yaml 合并
     - uniquifier
+    - charset_filter@gbk # 从 custom.yaml 合并
+    - single_char_filter # 从 custom.yaml 合并
 
 speller:
   alphabet: zyxwvutsrqponmlkjihgfedcba
   delimiter: " '"
   algebra:
+    - xform/^([b-df-hj-np-tv-z])$/$1_/ # 从 custom.yaml 合并
     - erase/^xx$/
-    - abbrev/^([a-z]).+$/$1/
-    - abbrev/^([zcs]h).+$/$1/
-    - derive/^([nl])ve$/$1ue/
-    - derive/^([jqxy])u/$1v/
-    - derive/un$/uen/
-    - derive/ui$/uei/
-    - derive/iu$/iou/
-    - derive/([aeiou])ng$/$1gn/
-    - derive/([dtngkhrzcs])o(u|ng)$/$1o/
-    - derive/ong$/on/
-    - derive/ao$/oa/
-    - derive/([iu])a(o|ng?)$/a$1$2/
+    # 模糊音定义
+    # 需要哪组就删去行首的 # 号，单双向任选
+    #- derive/^([zcs])h/$1/             # zh, ch, sh => z, c, s
+    #- derive/^([zcs])([^h])/$1h$2/     # z, c, s => zh, ch, sh
+
+    #- derive/^n/l/                     # n => l
+    #- derive/^l/n/                     # l => n
+
+    # 这两组一般是单向的
+    #- derive/^r/l/                     # r => l
+
+    #- derive/^ren/yin/                 # ren => yin, reng => ying
+    #- derive/^r/y/                     # r => y
+
+    # 下面 hu <=> f 这组写法复杂一些，分情况讨论
+    #- derive/^hu$/fu/                  # hu => fu
+    #- derive/^hong$/feng/              # hong => feng
+    #- derive/^hu([in])$/fe$1/          # hui => fei, hun => fen
+    #- derive/^hu([ao])/f$1/            # hua => fa, ...
+
+    #- derive/^fu$/hu/                  # fu => hu
+    #- derive/^feng$/hong/              # feng => hong
+    #- derive/^fe([in])$/hu$1/          # fei => hui, fen => hun
+    #- derive/^f([ao])/hu$1/            # fa => hua, ...
+
+    # 韵母部份
+    #- derive/^([bpmf])eng$/$1ong/      # meng = mong, ...
+    #- derive/([ei])n$/$1ng/            # en => eng, in => ing
+    #- derive/([ei])ng$/$1n/            # eng => en, ing => in
+
+    # 样例足够了，其他请自己总结……
+
+    # 反模糊音？
+    # 谁说方言没有普通话精确、有模糊音，就能有反模糊音。
+    # 示例为分尖团的中原官话：
+    #- derive/^ji$/zii/   # 在设计者安排下鸠占鹊巢，尖音i只好双写了
+    #- derive/^qi$/cii/
+    #- derive/^xi$/sii/
+    #- derive/^ji/zi/
+    #- derive/^qi/ci/
+    #- derive/^xi/si/
+    #- derive/^ju/zv/
+    #- derive/^qu/cv/
+    #- derive/^xu/sv/
+    # 韵母部份，只能从大面上覆盖
+    #- derive/^([bpm])o$/$1eh/          # bo => beh, ...
+    #- derive/(^|[dtnlgkhzcs]h?)e$/$1eh/  # ge => geh, se => sheh, ...
+    #- derive/^([gkh])uo$/$1ue/         # guo => gue, ...
+    #- derive/^([gkh])e$/$1uo/          # he => huo, ...
+    #- derive/([uv])e$/$1o/             # jue => juo, lve => lvo, ...
+    #- derive/^fei$/fi/                 # fei => fi
+    #- derive/^wei$/vi/                 # wei => vi
+    #- derive/^([nl])ei$/$1ui/          # nei => nui, lei => lui
+    #- derive/^([nlzcs])un$/$1vn/       # lun => lvn, zun => zvn, ...
+    #- derive/^([nlzcs])ong$/$1iong/    # long => liong, song => siong, ...
+    # 这个办法虽从拼写上做出了区分，然而受词典制约，候选字仍是混的。
+    # 只有真正的方音输入方案才能做到！但「反模糊音」这个玩法快速而有效！
+
+    # 模糊音定义先于简拼定义，方可令简拼支持以上模糊音
+    - abbrev/^([a-z]).+$/$1/ # 简拼（首字母）
+    - abbrev/^([zcs]h).+$/$1/ # 简拼（zh, ch, sh）
+
+    # 以下是一组容错拼写，《汉语拼音》方案以前者为正
+    - derive/^([nl])ve$/$1ue/          # nve = nue, lve = lue
+    - derive/^([jqxy])u/$1v/           # ju = jv,
+    - derive/un$/uen/                  # gun = guen,
+    - derive/ui$/uei/                  # gui = guei,
+    - derive/iu$/iou/                  # jiu = jiou,
+
+    # 自动纠正一些常见的按键错误
+    - derive/([aeiou])ng$/$1gn/        # dagn => dang
+    - derive/([dtngkhrzcs])o(u|ng)$/$1o/  # zho => zhong|zhou
+    - derive/ong$/on/                  # zhonguo => zhong guo
+    - derive/ao$/oa/                   # hoa => hao
+    - derive/([iu])a(o|ng?)$/a$1$2/    # tain => tian
 
 translator:
-  dictionary: luna_pinyin
+  dictionary: rime_ice # 从 custom.yaml 合并
   prism: luna_pinyin_simp
   preedit_format:
     - xform/([nl])v/$1ü/
@@ -81,14 +156,26 @@ custom_phrase:
 simplifier:
   option_name: zh_simp
 
+emoji_conversion: # 从 custom.yaml 合并
+  opencc_config: emoji.json
+  option_name: show_emoji
+  tags: abc
+  #tips: all    # Emoji 显示注释
+
+english: # 从 custom.yaml 合并
+  dictionary: easy_en
+  enable_completion: false # 是否启用英文输入联想补全
+  enable_sentence: false # 混输时不出现带有图案的英文〔方案選單〕
+  initial_quality: -0.5 # 英文候选词的位置, 数值越大越靠前。
+  comment_format: # 自定义提示码
+    - xform/.*//  # 清空提示码
+
 punctuator:
-  import_preset: default
+  patterns:
+    punct: "^/([a-z]+|[0-9]0?)$" # 从 custom.yaml 合并
 
 key_binder:
-  import_preset: default
   bindings:
-    - { when: always, accept: Control+Shift+4, toggle: zh_simp }
-    - { when: always, accept: Control+Shift+dollar, toggle: zh_simp }
 
 recognizer:
   import_preset: default
